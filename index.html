@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CC106 Cloud Computing</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 40px 20px 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+        }
+
+        h1, h2 {
+            color: #333;
+        }
+
+        section {
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 6px;
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        pre {
+            background: #eee;
+            padding: 10px;
+            text-align: left;
+            overflow-x: auto;
+            border-radius: 6px;
+            max-height: 200px;
+        }
+
+        img {
+            max-width: 100%;
+            margin-top: 10px;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>GitHub Minimal Dashboard</h1>
+
+<section>
+    <h2>Read Public File</h2>
+    <button onclick="fetchGitHubFile()">Fetch File</button>
+    <pre id="public-file-content">File content will appear here...</pre>
+</section>
+
+<section>
+    <h2>Read Private File</h2>
+    <button onclick="fetchPrivateGitHubFile()">Fetch Private File</button>
+    <pre id="private-file-content">File content will appear here...</pre>
+</section>
+
+<section>
+    <h2>Fetch Image from GitHub</h2>
+    <button onclick="fetchGitHubImage()">Fetch Image</button>
+    <div id="image-container"></div>
+</section>
+
+<section>
+    <h2>Upload File to Private Repo</h2>
+
+<input type="file" id="fileInput">
+    <br><br>
+
+    <button onclick="uploadFile()">Upload File</button>
+</section>
+
+<script>
+
+async function fetchGitHubFile() {
+        const owner = "vercs1";
+        const repo = "cc106_cloud1";
+        const filePath = "67.txt";
+        const branch = "main";
+
+        const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?ref=${branch}`;
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            const content = atob(data.content);
+            document.getElementById("public-file-content").textContent = content;
+        } catch (error) {
+            document.getElementById("public-file-content").textContent = "Failed to load file.";
+        }
+    }
+
+    async function fetchPrivateGitHubFile() {
+        const owner = "vercs1";
+        const repo = "cc106_cloud1";
+        const filePath = "67.txt";
+        const branch = "main";
+        const token = "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";
+
+        const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?ref=${branch}`;
+
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: "application/vnd.github.v3+json"
+                }
+            });
+            const data = await response.json();
+            const content = atob(data.content);
+            document.getElementById("private-file-content").textContent = content;
+        } catch (error) {
+            document.getElementById("private-file-content").textContent = "Failed to load file.";
+        }
+    }
+
+    async function fetchGitHubImage() {
+        const owner = "vercs1";
+        const repo = "cc106_cloud1";
+        const filePath = "patrick2.jpg";
+        const token = "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";
+
+        const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
+
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: "application/vnd.github.v3+json"
+                }
+            });
+            const data = await response.json();
+            const img = new Image();
+            img.src = `data:image/png;base64,${data.content}`;
+            document.getElementById("image-container").innerHTML = "";
+            document.getElementById("image-container").appendChild(img);
+        } catch (error) {
+            console.error("Image fetch failed");
+        }
+    }
+
+    async function uploadFile() {
+        const fileInput = document.getElementById("fileInput");
+        if (!fileInput.files.length) {
+            alert("Please choose a file first.");
+            return;
+        }
+
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+
+        reader.onload = async () => {
+            const content = reader.result.split(",")[1];
+            const owner = "vercs1";
+            const repo = "cc106_cloud1";
+            const token = "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";
+
+            const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${file.name}`;
+
+            const body = {
+                message: `Upload ${file.name}`,
+                content: content
+            };
+
+            const response = await fetch(apiUrl, {
+                method: "PUT",
+                headers: {
+                    Authorization: `token ${token}`,
+                    Accept: "application/vnd.github.v3+json",
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(body)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert("File uploaded successfully!");
+            } else {
+                alert(result.message);
+            }
+        };
+
+        reader.readAsDataURL(file);
+    }
+</script>
+
+</body>
+</html>
